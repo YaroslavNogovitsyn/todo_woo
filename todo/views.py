@@ -2,7 +2,11 @@ from django.db import IntegrityError
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
+
+
+def home(request):
+    return render(request, 'todo/home.html')
 
 
 def sign_up_user(request):
@@ -21,8 +25,14 @@ def sign_up_user(request):
                                'error': 'This username already exists. Please select a new username'})
         else:
             return render(request, 'todo/sign_up_user.html',
-                          {'form': UserCreationForm(), 'error': 'Passwords didnt match'})
+                          {'form': UserCreationForm(), 'error': 'Passwords didnt match', 'title': 'Sign Up'})
+
+
+def logout_user(request):
+    if request.method == 'POST':
+        logout(request)
+        return redirect('home')
 
 
 def current_todos(request):
-    return render(request, 'todo/current_todos.html', {'form': UserCreationForm()})
+    return render(request, 'todo/current_todos.html', {'title': 'Current ToDos'})

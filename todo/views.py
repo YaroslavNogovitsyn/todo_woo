@@ -1,5 +1,5 @@
 from django.db import IntegrityError
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
@@ -70,3 +70,19 @@ def create_todo(request):
 def current_todos(request):
     todos = ToDo.objects.filter(user=request.user, date_completed__isnull=True)
     return render(request, 'todo/current_todos.html', {'title': 'Current ToDos', 'todos': todos})
+
+
+def view_todo(request, todo_pk):
+    todo = get_object_or_404(ToDo, pk=todo_pk, user=request.user)
+    if request.method == 'GET':
+        form = ToDoForm(instance=todo)
+        return render(request, 'todo/view_todo.html', {'title': f'ToDo №{todo_pk}', 'todo': todo, 'form': form})
+    else:
+        try:
+            form = ToDoForm(request.POST, instance=todo)
+            form.save()
+            return redirect('current_todos')
+        except ValueError:
+            form = ToDoForm(instance=todo)
+            return render(request, 'todo/view_todo.html',
+                          {'title': f'ToDo №{todo_pk}', 'todo': todo, 'form': form, 'error': 'Bad info. Try again'})

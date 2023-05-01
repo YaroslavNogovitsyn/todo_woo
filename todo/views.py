@@ -1,12 +1,12 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .forms import ToDoForm
+from .forms import ToDoForm, UserLoginForm, UserRegistrationForm
 from .models import ToDo
 
 
@@ -16,7 +16,7 @@ def home(request):
 
 def sign_up_user(request):
     if request.method == 'GET':
-        return render(request, 'todo/sign_up_user.html', {'form': UserCreationForm(), 'title': 'Sign Up'})
+        return render(request, 'todo/sign_up_user.html', {'form': UserRegistrationForm(), 'title': 'Sign Up'})
     else:
         if request.POST['password1'] == request.POST['password2']:
             try:
@@ -35,17 +35,19 @@ def sign_up_user(request):
 
 
 def login_user(request):
-    if request.method == 'GET':
-        return render(request, 'todo/login_user.html', {'form': AuthenticationForm(), 'title': 'Login'})
+    if request.method == 'POST':
+        form = UserLoginForm(data=request.POST)
+        if form.is_valid():
+            username = request.POST['username']
+            password = request.POST['password']
+            user = authenticate(request, username=username, password=password)
+            if user:
+                login(request, user)
+                return redirect('current_todos')
     else:
-        user = authenticate(request, username=request.POST['username'], password=request.POST['password'])
-        if user is None:
-            return render(request, 'todo/login_user.html',
-                          {'form': AuthenticationForm(), 'error': 'Username and password did not match',
-                           'title': 'Sign Up'})
-        else:
-            login(request, user)
-            return redirect('current_todos')
+        form = UserLoginForm()
+    context = {'form': form, 'title': 'Login'}
+    return render(request, 'todo/login_user.html', context=context)
 
 
 @login_required
